@@ -5,12 +5,12 @@
 El proceso que se describe en este guía tiene por objetivo el desarrollo de una aplicación de control de un dron (o varios) que pueda demostrarse en el DroneLab del Campus del Baix Llobregat. Esta aplicación se desarrollará en equipos de 3 o 4 personas.
 El proceso permite el aprendizaje de una variedad de conceptos, tecnologías y herramientas. En particular, se aprende (entre otras cosas):   
 
-•	Cómo es un dron cuatrimotor y qué componentes tiene
-•	Cómo se controla el dron desde un programa de ordenador (un portátil) o desde un teléfono móvil
-•	Cómo se desarrolla una interfaz gráfica para controlar el dron, en Python o en C#, que incluya mapas geolocalizados para visualizar la posición del dron
-•	Cómo se articula la comunicación entre los diferentes dispositivos que intervienen en la aplicación
-•	Cómo se transmite/recibe el stream de vídeo capturado por la cámara del dron
-•	Cómo se reconocen objetos en el stream de vídeo
+*	Cómo es un dron cuatrimotor y qué componentes tiene
+*	Cómo se controla el dron desde un programa de ordenador (un portátil) o desde un teléfono móvil
+*	Cómo se desarrolla una interfaz gráfica para controlar el dron, en Python o en C#, que incluya mapas geolocalizados para visualizar la posición del dron
+*	Cómo se articula la comunicación entre los diferentes dispositivos que intervienen en la aplicación
+*	Cómo se transmite/recibe el stream de vídeo capturado por la cámara del dron
+*	Cómo se reconocen objetos en el stream de vídeo
 
 La aplicación tiene 4 versiones. La versión 1 está muy guiada. Se desarrolla paso a paso siguiendo las instrucciones de esta guía. En cada paso se introduce algún concepto/herramienta/tecnología nueva. Este repositorio proporciona los códigos implicados en cada paso de manera que basta comprobar que el código funciona correctamente. La guía también propone sencillos ejercicios que requieren la modificación del código proporcionado para corregir algún mal funcionamiento o para introducir alguna nueva funcionalidad. Es muy conveniente que cada miembro del equipo desarrolle de forma individual esta primera versión, aunque naturalmente compartiendo dudas y progresos con los compañeros de equipo y con los profesores.    
  
