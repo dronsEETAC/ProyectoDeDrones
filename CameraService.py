@@ -1,0 +1,86 @@
+###########  INSTALAR #########################
+# opencv-python
+# aiortc
+###############################################
+
+
+import asyncio
+import cv2
+from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
+from aiortc.contrib.signaling import TcpSocketSignaling
+from av import VideoFrame
+import fractions
+
+
+class CustomVideoStreamTrack(VideoStreamTrack):
+    def __init__(self, camera_id):
+        super().__init__()
+        print ("Preparando la cámara ...")
+        self.cap = cv2.VideoCapture(camera_id)
+        self.frame_count = 0
+
+    async def recv(self):
+        self.frame_count += 1
+        print(f"Sending frame {self.frame_count}")
+        ret, frame = self.cap.read()
+        if not ret:
+            print("Failed to read frame from camera")
+            return None
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        video_frame = VideoFrame.from_ndarray(frame, format="rgb24")
+        video_frame.pts = self.frame_count
+        video_frame.time_base = fractions.Fraction(1, 30)  # Use fractions for time_base
+
+
+        video_frame = VideoFrame.from_ndarray(frame, format="rgb24")
+        video_frame.pts = self.frame_count
+        video_frame.time_base = fractions.Fraction(1, 30)  # Use fractions for time_base
+        return video_frame
+
+async def setup_webrtc_and_run(ip_address, port, camera_id):
+    signaling = TcpSocketSignaling(ip_address, port)
+    #signaling = TcpSocketSignaling("127.0.0.1", port, role="client")
+    pc = RTCPeerConnection()
+    video_sender = CustomVideoStreamTrack(camera_id)
+    pc.addTrack(video_sender)
+
+    try:
+        print ("Esperando clientes")
+        await signaling.connect()
+
+        @pc.on("datachannel")
+        def on_datachannel(channel):
+            print(f"Data channel established: {channel.label}")
+
+        @pc.on("connectionstatechange")
+        async def on_connectionstatechange():
+            print(f"Connection state is {pc.connectionState}")
+            if pc.connectionState == "connected":
+                print("WebRTC connection established successfully")
+
+        offer = await pc.createOffer()
+        await pc.setLocalDescription(offer)
+        await signaling.send(pc.localDescription)
+
+        while True:
+            obj = await signaling.receive()
+            if isinstance(obj, RTCSessionDescription):
+                await pc.setRemoteDescription(obj)
+                print("Remote description set")
+            elif obj is None:
+                print("Signaling ended")
+                break
+        print("Closing connection")
+    finally:
+        await pc.close()
+
+async def main():
+    # En este caso es el emisor el que actua de servidor, exponiendo el canal de comunicación
+    # en el puerto 9999
+    ip_address = "0.0.0.0"
+    port = 9999
+    camera_id = 0  # Change this to the appropriate camera ID
+    await setup_webrtc_and_run(ip_address, port, camera_id)
+
+if __name__ == "__main__":
+    asyncio.run(main())
