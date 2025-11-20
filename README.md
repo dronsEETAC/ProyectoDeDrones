@@ -24,18 +24,42 @@ La versión 4 será la versión final con todas las funcionalidades previstas. A
 
 
 ## 3. Recursos    
-Mission Planner y SITL    
+### 3.1 Git y GitHub   
+Git y GitHub son herramientas que facilitan la gestión de versiones, el mantenimiento de código en la nube y el trabajo cooperativo en el desarrollo de código o documentos.   
 
-Python y PyCharm o Visual Studio Code     
+En este vídeo se explica lo esencial para instalarse las herramientas y entender los principios de funcionamiento:   
+[![](https://markdown-videos-api.jorgenkh.no/url?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DnBh4BNyI6vw)](https://www.youtube.com/watch?v=nBh4BNyI6vw)
 
-Visual C# y Visual Studio    
+Git puede instalarse desde esta página:   
+https://git-scm.com/downloads
 
-Repo taller teleco-renta, que incluye una breve descripción de cómo es el dron    
+### 3.2 Mission Planner y SITL    
+Mission planner es una aplicación de escritorio que permite interactuar con el dron. Por ejemplo, permite configurar muchos parámetros del dron y darle ordenes típicas (armar, despegar, volar a un punto dado, etc.). Mission Planner permite también poner en marcha un simulador del dron, que llamaremos SITL (Software In The Loop). Tanto Mission Planner como las aplicaciones que se desarrollan en esta guía interactúan con el simulador, exactamente igual que como lo harían con el dron real. Esto es ideal para desarrollar y verificar el correcto funcionamiento de los códigos antes de usarlos para controlar el dron real.    
 
-Librería DronLink    
+Mission Planner puede descargarse desde aquí:   
+https://ardupilot.org/planner/docs/mission-planner-installation.html
 
-Librería csDronLink    
+### 3.3 Python y PyCharm     
+Una buena parte del código se desarrollará en Python, por lo que se necesita un intérprete, que puede descargarse de aquí:
+https://www.python.org/downloads/
 
+PyCharm es el IDE más popular para el desarrollo de código en Python. Puede descargarse desde aqui:   
+https://www.jetbrains.com/pycharm/
+
+### 3.4 Visual C# y Visual Studio    
+También será necesario programar en Visual C#. La herramienta recomendada para esto es Visual Studio, que puede descargarse desde aqui:
+https://visualstudio.microsoft.com/es/downloads/
+
+
+### 3.5 Repo taller teleco-renta, que incluye una breve descripción de cómo es el dron    
+En este repositorio puede encontrarse una guía que permite iniciarse en el uso de Mission Planner. También contiene una descripción de los aspectos más básicos del dron en el que se basa el proyecto a desarrollar.  
+ 
+### 3.6 Librería DronLink    
+Esta librería facilita la programación en Python de las operaciones necesarias para controlar el dron. Todos los detalles pueden encontrarse en este repositorio. Es importante leer en detalle el apartado en el que se describe el modelo de programación. También pueden ser de utilidad los diferentes programas de test que ilustran la manera de usar las diferentes funciones de la librería.    
+
+### 3.7 Librería csDronLink    
+Esta es una implementación de DronLink para C#. Toda la información (incluyendo ejemplos de uso) puede encontrarse en este repositorio. Es importante tener en cuenta que esta librería está menos desarrollada que DronLink y tiene menos funcionalidades.    
+[![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-Flying_Indoor-blue.svg)](https://github.com/dronsEETAC/DashIndoor.git) 
 
 ## 4. Versión 1    
 
