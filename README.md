@@ -53,7 +53,7 @@ https://visualstudio.microsoft.com/es/downloads/
 
 
 ### 3.5 Repo taller teleco-renta, que incluye una breve descripción de cómo es el dron    
-En este repositorio [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-Tutorial_MissionPlanner-blue.svg)](https://github.com/dronsEETAC/telecoRenta_taller_de_drones.git)  puede encontrarse una guía que permite iniciarse en el uso de Mission Planner. También contiene una descripción de los aspectos más básicos del dron en el que se basa el proyecto a desarrollar.  
+En este repositorio [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-Tutorial_Mission_Planner-blue.svg)](https://github.com/dronsEETAC/telecoRenta_taller_de_drones.git)  puede encontrarse una guía que permite iniciarse en el uso de Mission Planner. También contiene una descripción de los aspectos más básicos del dron en el que se basa el proyecto a desarrollar.  
 
 ### 3.6 Librería DronLink    
 Esta librería facilita la programación en Python de las operaciones necesarias para controlar el dron. Todos los detalles pueden encontrarse en este repositorio [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-DronLink-blue.svg)](https://github.com/dronsEETAC/DronLink.git). Es importante leer en detalle el apartado en el que se describe el modelo de programación. También pueden ser de utilidad los diferentes programas de test que ilustran la manera de usar las diferentes funciones de la librería.    
@@ -282,9 +282,10 @@ Por otra parte, la recepción del vídeo por parte del Dashboard el C# tampoco e
 
 Finalmente, tampoco es sencillo hacer que el stream de video se muestre en el cliente web de la WebApp.    
 
-En todo caso, en este repositorio hay abundante material que puede resultar de ayuda para resolver estos retos.  
+En todo caso, en este repositorio [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-Video Streaming-blue.svg)](https://github.com/dronsEETAC/Tutorial_VideoStreaming.git) hay abundante material que puede resultar de ayuda para resolver estos retos.  
 
-El uso del micrófono del dispositivo móvil para capturar la voz y controlar el dron con ella plantea el reto de que debe hacerse en modo seguro, es decir, con HTTPS y no con HTTP. Esto es así porque tratandose de información privada del usuario (su voz) los navegadores exigen que la información se transmita encriptada, lo cual requiere del uso de certificados que implementen claves públicas y privadas. Lo mismo pasaría si quisiésemos capturar información de otros sensores del movil, como por ejemplo, la imagen de la cámara o la geolocalización del móvil. Aunque resolver la cuestion solo requiere generar los certificados necesarios (cosa muy sencilla) y añadir unas pocas líneas de código los conceptos que hay detrás son complejos, aunque muy interesantes. En este repositorio hay material abundante que resultará de ayuda para aprender los conceptos clave y abordar el reto.
+El uso del micrófono del dispositivo móvil para capturar la voz y controlar el dron con ella plantea el reto de que debe hacerse en modo seguro, es decir, con HTTPS y no con HTTP. Esto es así porque tratandose de información privada del usuario (su voz) los navegadores exigen que la información se transmita encriptada, lo cual requiere del uso de certificados que implementen claves públicas y privadas. Lo mismo pasaría si quisiésemos capturar información de otros sensores del movil, como por ejemplo, la imagen de la cámara o la geolocalización del móvil. Aunque resolver la cuestion solo requiere generar los certificados necesarios (cosa muy sencilla) y añadir unas pocas líneas de código los conceptos que hay detrás son complejos, aunque muy interesantes. Esta colección de vídeos [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-video_tutorial_Secure_WebApps-pink.svg)](https://www.youtube.com/playlist?list=PLyAtSQhMsD4qbgXn6jheozHsjU4GRCqtv) ayuda a abordar la cuestión.
+
 
 
 
