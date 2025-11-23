@@ -64,6 +64,7 @@ Esta es una implementación de DronLink para C#. Toda la información (incluyend
 
 ### 3.8 Comunicaciones
 Esta es una lectura para aprender lo básico sobre las diferentes tecnologías y herramientas relacionadas con las comunicaciones entre los diferentes elementos que pueden intervenir en el proyecto a desarrollar.   
+[comunicacionesEcosistema.pdf](https://github.com/user-attachments/files/23694565/comunicacionesEcosistema.pdf)
 
 ## 4. Versión 1    
 
