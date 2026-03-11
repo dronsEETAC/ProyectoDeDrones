@@ -295,6 +295,8 @@ Se proponen los siguientes ejercicios:
 1.	Procesar 1 de cada 100 frames hace que el impacto en la fluidez sea despreciable, pero introduce un retardo en la detección del objeto. Experimentar con valores más bajos de ese periodo hasta encontrar un mejor compromiso entre fluidez y retardo en la detección.
 2.	Añadir botones para reconocer otros objetos del data set de COCO.
 
+### 4.5 Demostración de la versión 1   
+La demostración se hará en el DroneLab. Se desplegará allí un escenario global con la estación de tierra en Python, la estación de tierra en C# (ambas ejecutandose en el portátil) y la WebApp. El dron se despegará desde Python y harán dos o tres movimientos en diferentes direcciones, se harán varios movimientos más desde C# y finalmente varios movimientos más y aterrizaje desde la WebApp.    
 
 ## 5. Versión 2
 Lo que hemos llamado versión 1 no es en realidad una versión de nada. Se trata de diferentes módulos desarrollados de manera independiente para aprender conceptos y herramientas. Ahora ha llegado el momento de crear una verdadera versión de un sistema en el que los díferentes módulos estén interconectados y puedan colaborar en la tarea de controlar el dron.    
