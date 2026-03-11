@@ -259,6 +259,19 @@ Se proponen los siguientes ejercicios:
 2.	Añadir un nuevo botón para realizar la operación RTL.
 3.	Añadir los elementos necesarios para poder cambiar el heading del dron, igual que puede hacerse en las aplicaciones descritas en apartados anteriores.
 
+#### 4.2.4 Advertencia sobre los topics en MQTT   
+Cabe esperar que varios grupos hagan pruebas de sus aplicaciones en el aula al mismo tiempo, haciendo publicaciones simultaneamente en el mismo broker y usando los mismos topics, que son los que aparecen en los códigos proporcionados en este repo. Por ejemplo, si hay varios grupos probando el autopilot service al mismo tiempo, todos suscritos en el mismo broker al topic:   
+```
+'interfazGlobal/autopilotServiceDemo/arm_takeOff'
+```
+en cuanto una de las aplicaciones publique ese topic, todos los drones despegarán.   
+
+Para evitar esta interferencia es importante que cada grupo revise el formato que va a usar para los topics. Lo más sencillo es que cada grupo añada de alguna manera en el topic el número de grupo. Por ejemplo:   
+```
+'interfazGlobal5/autopilotServiceDemo5/arm_takeOff'
+```  
+
+
 ### 4.3 Videostreaming   
  
 Muchas de las aplicaciones de los drones requieren la captura y procesado de imágenes, como, por ejemplo, el stream de video. Naturalmente, esto requiere que el dron tenga instalada una cámara abordo y un trasmisor que envíe la señal de vídeo a la estación de tierra, en la que debe haber un receptor que permita entregar ese stream de video a la aplicación que lo necesite.    
