@@ -370,7 +370,7 @@ En la demo intervienen (tanto en simulación como en producción):
 En la demostración en simulación será necesario usar otro teléfono móvil que compartirá su conexión a internet para tanto el segundo portátil como el telefono móvil puedan estar en la misma LAN y el movil pueda conectarse a la webapp.  
 
  
- <img width="2000" height="1200" alt="Imagen1" src="https://github.com/user-attachments/assets/22227e05-d7fb-4c40-b8c9-b8fc8a49bf36" />
+ <img width="1500" height="800" alt="Imagen1" src="https://github.com/user-attachments/assets/22227e05-d7fb-4c40-b8c9-b8fc8a49bf36" />
 
 También en la demostración en simulación se verificará que el camera service puede capturar el stream de video de la cámara del dron.
 
