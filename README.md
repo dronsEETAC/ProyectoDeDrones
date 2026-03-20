@@ -358,6 +358,20 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 2. Debe comunicarse con el servicio de autopiloto por MQTT y con el servicio de cámara por WebRTC
 3. El usuario debe poder controlar el dron mediante la voz, diciendo palabras clave como: "Despega", "Aterriza", "Vuela hacia el Norte", etc.
 
+#### 5.1.4 Demostracion de la versión 2    
+
+La demostración tiene dos fases: demo en modo simulación y (si todo va bien) demo modo producción, en el DroneLab.  
+En la demo intervienen (tanto en simulación como en producción):
+1. Un portátil con el dashboard en Python que trabajará en modo local (se conectará al SITL o al dron) a través de MAVProxy, al que también estará conectado Mission Planner. En este portátil también se pondrán en funcionamiento el autopilot service y el camera service.
+2. Un segundo portátil con el dashboard en Python que trabajaré en modo global. Además en este protátil correrá el servidor de la web app.
+3. Un tercer portátil en el que se ejecutará el dashboard en C# trabajando en modo global.
+4. Un telefono móvil que se conectará a la webapp.
+ 
+En la demostración en simulación será necesario usar otro teléfono móvil que compartirá su conexión a internet para tanto el segundo portátil como el telefono móvil puedan estar en la misma LAN y el movil pueda conectarse a la webapp.  
+ 
+También en la demostración en simulación se verificará que el camera service puede capturar el stream de video de la cámara del dron.
+
+
 ## 5.2 Observaciones y recursos
 Para muchos de los retos que se han planteado, la IA puede proporcionar soluciones fáciles de adaptar (por ejemplo, el tema de los mapas geolocalizados o en tema de captar la voz y convertirla en texto). Pero es posible que la IA no ayude mucho en los retos relacionados con la trasmisión del video por WebRTC.
 
