@@ -350,7 +350,7 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 1. Debe funcionar en modo global, es decir, haciendo peticiones al servicio de autopiloto por MQTT
 2. Debe mostrar al usuario un mapa geolocalizado con la ubicación del dron en cada momento
 3. El usuario debe poder clicar en el mapa para hacer que el dron se dirija a ese punto
-4. Debe mostrar el stream de video que se recibe por WebRTC del servicio de cámara. Para implementar este requisito y los dos siguientes es muy importante mirar lo que se explica en el apartado 5.2.
+4. Debe mostrar el stream de video que se recibe por WebRTC del servicio de cámara. Para implementar este requisito es muy importante mirar lo que se explica en el apartado 5.2.
 5. El usuario debe poder solicitar el reconocimiento de uno o varios objetos de entre un subconjunto del data ser de COCO
 6. Debe permitir capturar imagenes del stream de video (hacer fotos) y guardarlas, de manera que el usuario pueda verlas cuando quiera en un formulario que muestre una galería de las fotos tomadas
 
@@ -358,7 +358,7 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 
 1. Debe tener una pestaña que muestre los botones para controlar el dron, otra para mostrar un mapa geolocalizado con la posición del dron en cada momento y otra con el stream de video que se recibe del dron
 2. Debe comunicarse con el servicio de autopiloto por MQTT y con el servicio de cámara por WebRTC
-3. El usuario debe poder controlar el dron mediante la voz, diciendo palabras clave como: "Despega", "Aterriza", "Vuela hacia el Norte", etc. Para implementar este requisito y los dos siguientes es muy importante mirar lo que se explica en el apartado 5.2.
+3. El usuario debe poder controlar el dron mediante la voz, diciendo palabras clave como: "Despega", "Aterriza", "Vuela hacia el Norte", etc. Para implementar este requisito es muy importante mirar lo que se explica en el apartado 5.2.
 
 #### 5.1.4 Demostracion de la versión 2    
 
@@ -371,14 +371,11 @@ En la demo intervienen (tanto en simulación como en producción):
 
 En la demostración de la versión 2 se usará un bróker MQTT propio instalado en una máquina del Campus (no es Hivemq). Hay que solicitar a los responsables académicos la información necesaria para poder usar este bróker, que tiene claves de autentificación.   
  
-En la demostración en modo simulación, los portátiles 1 y 3 se conectarán a internet por el medio disponible (quizá eduroam). Por otra parte, se usará un teléfono móvil auxiliar que compartirá su conexión a internet para que tanto el portátil 2 como el teléfono móvil puedan estar en la misma LAN y el movil pueda conectarse a la webapp. 
-
-En la demostración en modo producción, todos los dispositivos estarán conectados a la wifi del DroneLab (todos en la misma LAN). No será necesario el movil auxiliar porque el móvil con el cliente web podrá conectarse al servidor web una vez conocida la IP de éste, dentro de la LAN.  
+Tanto en simulación como en producción todos los módulos deben estar conectados a la misma LAN, para que puedan conectarse directamente entre ellos (por ejemplo, al CameraService los módulos que quieran recibir el stream de video o al servidor web los teléfonos móviles que quieran controlar el dron). En producción podrá usarse la wifi del DroneLab. En simulación puede ayudar usar un telefono auxiliar para crear un punto de acceso para compartir datos.   
 
  <img width="1500" height="800" alt="Imagen2" src="https://github.com/user-attachments/assets/8c09a309-c264-4627-8572-fa67d697816e" />
 
-
-También en la demostración en simulación se verificará que el stream de video de la cámara del dron, capturado por el Camera Service llega a los diferentes módulos conectados (dashboards en Python y C# y a la web app).
+La demostración también debe poner en evidencia que el stream de video de la cámara del dron, capturado por el Camera Service llega a los diferentes módulos conectados (dashboards en Python y C# y a la web app).
 
 
 ## 5.2 Observaciones y recursos    
