@@ -380,11 +380,11 @@ La demostración también debe poner en evidencia que el stream de video de la c
 
 ## 5.2 Observaciones y recursos    
  
-Para muchos de los retos que se plantean en la versión 2, la IA puede proporcionar soluciones fáciles de adaptar (por ejemplo, el tema de los mapas geolocalizados). Pero hay dos retos especialmente desafiantes para los que sse recomiendan unos materiales complementarios. Se trata de la distribución del stream de vídeo por WebRTC a los diferentes módulos y del uso de https en la web app para controlar el dron mediante la voz.    
+Para muchos de los retos que se plantean en la versión 2, la IA puede proporcionar soluciones fáciles de adaptar (por ejemplo, el tema de los mapas geolocalizados). Pero hay dos retos especialmente desafiantes para los que se recomiendan unos materiales complementarios. Se trata de la distribución del stream de vídeo por WebRTC a los diferentes módulos y del uso de https en la web app para controlar el dron mediante la voz.    
 
 La distribución del stream de video por WebRTC no ofrece ninguna dificultad especial en el caso de que todos los módulos implicados estén conectados a la misma LAN (por ejemplo, a la wifi del DroneLab). En ese caso todos los módulos pueden usar la IP del portátil en el que se ejecuta el Camera Service para conectarse y recibir el stream de video, exactamente como se hizo en la versión 1.   
 
-La situación es más complicada si alguno de los módulos que deben recibir el stream de video está conectada a una LAN diferente. Ese sería el caso si el telefono móvil no estuviese conectado a la wifi del DroneLab sino que estuviese conectado al servicio de datos. En esa situación, el cliente web que se ejecuta en el movil no puede conectarse directamente al Camera Service
+La situación es más complicada si alguno de los módulos que deben recibir el stream de video está conectada a una LAN diferente. Ese sería el caso si el telefono móvil no estuviese conectado a la wifi del DroneLab sino que estuviese conectado al servicio de datos. En esa situación, el cliente web que se ejecuta en el movil no puede conectarse directamente al Camera Service. Para resolver el problema se necesita de un intermediario (un proxy) ejecutándose en una máquina con IP pública de manera que todos los módulos se conecten a ese proxy que habría de intermediario en el establecimiento de la comunicación via WebRTC. 
 
 
 
