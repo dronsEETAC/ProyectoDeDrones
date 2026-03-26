@@ -316,8 +316,10 @@ Se realizarán tres pruebas independientes para verificar el correcto funcionami
 En el aula, antes de ir al DroneLab, deben comprobarse que cada uno de los modulos se conecta al dron, recibe bien los datos de telemetría y puede armarse. Esa simple prueba en el aula acostumbra a evidenciar algunos problemas como estos:   
 1. El portátil no muestra el puerto COM en el que se ha conectado la radio de telemetría. Esto indica que al instalar Mission Planner no se instalaron los drivers que permiten trabajar con la radio de telemetría. Hay que desinstalar Mission Planner y volver a instalarlo, prestando especial atención al proceso y al momento en el que el instador pide permiso para instalar los drivers.   
 2. La aplicación no encuentra el módulo *serial*. Se echa en falta la librería *pyserial*, que hay que instalar.
-3. El enlace de telemetría es lento y pasa mucho tiempo desde que el dron se arma hasta que recibimos el aviso de que ya está armado, con lo cual el dron se desarma antes de tiempo (esto es especialmente frecuente en el caso de la WebApp, porque ahí todo es más lento). Este problema tiene dos soluciones posibles. Eliminamos el boton de armar y hacemos que el boton de despegue ejecute primero la operación de armar e inmediatamente la de despegue, sin avisar al usuario ni esperar a que éste ordene el despegue. La alternativa es cambiar el parámetro de ardupilot que indica cuanto tiempo va a esperar antes de desarmar por falta de actividad. Ese parámetro es DISARM_DELAY.     
+3. El enlace de telemetría es lento y pasa mucho tiempo desde que el dron se arma hasta que recibimos el aviso de que ya está armado, con lo cual el dron se desarma antes de tiempo (esto es especialmente frecuente en el caso de la WebApp, porque ahí todo es más lento). Este problema tiene dos soluciones posibles. Eliminamos el boton de armar y hacemos que el boton de despegue ejecute primero la operación de armar e inmediatamente la de despegue, sin avisar al usuario ni esperar a que éste ordene el despegue. La alternativa es cambiar el parámetro de ardupilot que indica cuanto tiempo va a esperar antes de desarmar por falta de actividad. Ese parámetro es DISARM_DELAY.
 
+También en el aula se hará una prueba de verificación de que el dashboard en Python recibe y muestra correctamente el stream de video de la cámara que llevará instalada el dron.    
+ 
 ## 5. Versión 2
 Lo que hemos llamado versión 1 no es en realidad una versión de nada. Se trata de diferentes módulos desarrollados de manera independiente para aprender conceptos y herramientas. Ahora ha llegado el momento de crear una verdadera versión de un sistema en el que los díferentes módulos estén interconectados y puedan colaborar en la tarea de controlar el dron.    
 
@@ -348,7 +350,7 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 1. Debe funcionar en modo global, es decir, haciendo peticiones al servicio de autopiloto por MQTT
 2. Debe mostrar al usuario un mapa geolocalizado con la ubicación del dron en cada momento
 3. El usuario debe poder clicar en el mapa para hacer que el dron se dirija a ese punto
-4. Debe mostrar el stream de video que se recibe por WebRTC del servicio de cámara
+4. Debe mostrar el stream de video que se recibe por WebRTC del servicio de cámara. Para implementar este requisito y los dos siguientes es muy importante mirar lo que se explica en el apartado 5.2.
 5. El usuario debe poder solicitar el reconocimiento de uno o varios objetos de entre un subconjunto del data ser de COCO
 6. Debe permitir capturar imagenes del stream de video (hacer fotos) y guardarlas, de manera que el usuario pueda verlas cuando quiera en un formulario que muestre una galería de las fotos tomadas
 
@@ -356,27 +358,35 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 
 1. Debe tener una pestaña que muestre los botones para controlar el dron, otra para mostrar un mapa geolocalizado con la posición del dron en cada momento y otra con el stream de video que se recibe del dron
 2. Debe comunicarse con el servicio de autopiloto por MQTT y con el servicio de cámara por WebRTC
-3. El usuario debe poder controlar el dron mediante la voz, diciendo palabras clave como: "Despega", "Aterriza", "Vuela hacia el Norte", etc.
+3. El usuario debe poder controlar el dron mediante la voz, diciendo palabras clave como: "Despega", "Aterriza", "Vuela hacia el Norte", etc. Para implementar este requisito y los dos siguientes es muy importante mirar lo que se explica en el apartado 5.2.
 
 #### 5.1.4 Demostracion de la versión 2    
 
 La demostración tiene dos fases: demo en modo simulación y (si todo va bien) demo modo producción, en el DroneLab.  
 En la demo intervienen (tanto en simulación como en producción):
-1. Un portátil con el dashboard en Python que trabajará en modo local (se conectará al SITL o al dron) a través de MAVProxy, al que también estará conectado Mission Planner. En este portátil también se pondrán en funcionamiento el autopilot service y el camera service.
-2. Un segundo portátil con el dashboard en Python que trabajaré en modo global. Además en este protátil correrá el servidor de la web app.
-3. Un tercer portátil en el que se ejecutará el dashboard en C# trabajando en modo global.
+1. El portátil 1 con el dashboard en Python que trabajará en modo local (se conectará al SITL o al dron) a través de MAVProxy, al que también estará conectado Mission Planner. En este portátil también se pondrán en funcionamiento el autopilot service y el camera service.
+2. El portátil 2 con el dashboard en Python que trabajará en modo global. Además en este protátil correrá el servidor de la web app.
+3. El portátil 3 en el que se ejecutará el dashboard en C# trabajando en modo global.
 4. Un telefono móvil que se conectará a la webapp.
- 
-En la demostración en simulación será necesario usar otro teléfono móvil auxiliar que compartirá su conexión a internet para tanto el segundo portátil como el telefono móvil puedan estar en la misma LAN y el movil pueda conectarse a la webapp.  
 
+En la demostración de la versión 2 se usará un bróker MQTT propio instalado en una máquina del Campus (no es Hivemq). Hay que solicitar a los responsables académicos la información necesaria para poder usar este bróker, que tiene claves de autentificación.   
+ 
+En la demostración en modo simulación, los portátiles 1 y 3 se conectarán a internet por el medio disponible (quizá eduroam). Por otra parte, se usará un teléfono móvil auxiliar que compartirá su conexión a internet para que tanto el portátil 2 como el teléfono móvil puedan estar en la misma LAN y el movil pueda conectarse a la webapp. 
+
+En la demostración en modo producción, todos los dispositivos estarán conectados a la wifi del DroneLab (todos en la misma LAN). No será necesario el movil auxiliar porque el móvil con el cliente web podrá conectarse al servidor web una vez conocida la IP de éste, dentro de la LAN.  
  
  <img width="1500" height="800" alt="Imagen1" src="https://github.com/user-attachments/assets/22227e05-d7fb-4c40-b8c9-b8fc8a49bf36" />
 
-También en la demostración en simulación se verificará que el camera service puede capturar el stream de video de la cámara del dron.
+También en la demostración en simulación se verificará que el stream de video de la cámara del dron, capturado por el Camera Service llega a los diferentes módulos conectados (dashboards en Python y C# y a la web app).
 
 
-## 5.2 Observaciones y recursos
-Para muchos de los retos que se han planteado, la IA puede proporcionar soluciones fáciles de adaptar (por ejemplo, el tema de los mapas geolocalizados o en tema de captar la voz y convertirla en texto). Pero es posible que la IA no ayude mucho en los retos relacionados con la trasmisión del video por WebRTC.
+## 5.2 Observaciones y recursos    
+ 
+Para muchos de los retos que se plantean en la versión 2, la IA puede proporcionar soluciones fáciles de adaptar (por ejemplo, el tema de los mapas geolocalizados). Pero hay dos retos especialmente desafiantes para los que sse recomiendan unos materiales complementarios. Se trata de la distribución del stream de vídeo por WebRTC a los diferentes módulos y del uso de https en la web app para controlar el dron mediante la voz.    
+
+La distribución del stream de video por WebRTC no ofrece ninguna dificultad especial en el caso de que todos los módulos implicados estén conectados a la misma LAN (por ejemplo, a la wifi del DroneLab). En ese caso todos los módulos pueden usar la IP del portátil en el que se ejecuta el Camera Service para conectarse y recibir el stream de video, exactamente como se hizo en la versión 1.   
+
+
 
 El envío del stream de video por WebRTC a través de Internet no es trivial porque requiere de un proxy con IP pública a la que se conecten tanto el emisor como los diferentes clientes que soliciten el vídeo. Ese proxy también forma parte del sistema.    
 
