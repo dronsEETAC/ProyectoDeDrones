@@ -286,7 +286,7 @@ Cuando se usa WebRTC, uno de los agentes implicados (emisor o receptor) debe act
  
 El fichero *cameraService.py* contiene el código necesario para capturar el stream de video usando la librería OpenCV y emitirlo por WebRTC.  El código captura el video de la webcam conectada al portátil en el que se ejecute, pero cambiando el valor de camera_id puede capturar el video que llega al receptor que tenga conectado. Al ponerse en marcha, el servicio queda a la espera de que algún cliente solicite el stream de video. Entonces se inicia un sencillo protocolo de coordinación a través de un websocket de manera que, una vez puestos de acuerdo, se inicia la trasmisión del stream de video, frame a frame (en la función *recv*).    
  
-El fichero *DashboardLocalConVideoStream.py* contiene el código de un dashboard que es básicamente igual que el descrito en el apartado 4.1.1, al que se le ha añadido un botón para conectarse al CameraService y recibir el stream de video para mostrarlo al usuario. El código está preparado para el caso de que tanto el dashboard como el servicio se ejecuten en el mismo portátil (que debe tener una webcam). El sistema funcionaría igual si el servicio de cámara y el dashboard se ejecutan en portátiles diferentes pero conectados a la misma red de área local. En ese caso, hay que sustituir la palabra *localhost* en la función *videoReceiver* del Dashboard por la IP del servicio dentro de la red de área local.    
+El fichero *DashboardLocalConVideoStream.py* contiene el código de un dashboard que es básicamente igual que el descrito en el apartado 4.1.1, al que se le ha añadido un botón para conectarse al CameraService y recibir el stream de video para mostrarlo al usuario. El código está preparado para el caso de que tanto el dashboard como el servicio se ejecuten en el mismo portátil (que debe tener una webcam). El sistema funcionaría igual si el servicio de cámara y el dashboard se ejecutan en portátiles diferentes pero conectados a la misma red de área local. En ese caso, hay que sustituir la palabra *localhost* en la función *videoReceiver* del Dashboard por la IP del portátil en el que se ejecuta el CameraService.    
  
 La transmisión de video por WebRTC puede funcionar también en el caso de que el servicio y el dashboard estén conectados a Internet pero no en la misma red de área local. Si el servicio no está conectado a una IP pública entonces la coordinación entre servicio y dashboard debe realizarse a través de un proxy que sí tenga una IP pública conocida por ambos. Pero ese planteamiento se escapa del alcance de la versión 1 y puede quedar como objetivo en las siguientes versiones.
 
@@ -323,7 +323,7 @@ También en el aula se hará una prueba de verificación de que el dashboard en 
 ## 5. Versión 2
 Lo que hemos llamado versión 1 no es en realidad una versión de nada. Se trata de diferentes módulos desarrollados de manera independiente para aprender conceptos y herramientas. Ahora ha llegado el momento de crear una verdadera versión de un sistema en el que los díferentes módulos estén interconectados y puedan colaborar en la tarea de controlar el dron.    
 
-En la versión 2 habrá solo 3 modulos: el dashboard en python, el dashboard en C# y una webapp, todos ellos conectados a Internet. Además, ampliaremos las funcionalidades de todos ellos con, por ejemplo, mapas geolocalizados o control del dron por voz.    
+En la versión 2 habrá solo 3 módulos: el dashboard en python, el dashboard en C# y una webapp, todos ellos conectados a Internet. Además, ampliaremos las funcionalidades de todos ellos con, por ejemplo, mapas geolocalizados o control del dron por voz.    
 
 Además, la vesión 2 va a estar mucho menos guiada. Será necesario buscar información, probar y buscar más. El uso de ChatGPT (o similar) será de mucha ayuda, aunque se espera que la versión 2 se construya sobre la base de lo aprendido en la versión 1, y no con códigos muy diferentes, proporcionados por la IA, que funcionen pero apenas se entiendan. En cualquier caso, en el apartado 5.2 se proporcionan algunas pistas y se sugieren algunos recursos que pueden ser de ayuda.    
  
@@ -335,7 +335,7 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 
 #### 5.1.1 Dashboard en Python   
 
-1.  El dashboard en Python debe integrar el servicio de autopiloto y el servicio de cámara. 
+1. El dashboard en Python debe integrar el servicio de autopiloto y el servicio de cámara. 
 2. Debe poder trabajar en modo local o en modo global, según indique el usuario (quizá con un botón).
 3. Si se pone marcha en modo local entonces debe activar el servicio de autopiloto y el servicio de cámara. 
 4. Siempre tiene que haber una (y solo una) instancia del dashboard que se ponga en marcha en modo local, en el portátil que tenga la radio de telemetría y el receptor del vídeo del dron. 
@@ -374,8 +374,9 @@ En la demostración de la versión 2 se usará un bróker MQTT propio instalado 
 En la demostración en modo simulación, los portátiles 1 y 3 se conectarán a internet por el medio disponible (quizá eduroam). Por otra parte, se usará un teléfono móvil auxiliar que compartirá su conexión a internet para que tanto el portátil 2 como el teléfono móvil puedan estar en la misma LAN y el movil pueda conectarse a la webapp. 
 
 En la demostración en modo producción, todos los dispositivos estarán conectados a la wifi del DroneLab (todos en la misma LAN). No será necesario el movil auxiliar porque el móvil con el cliente web podrá conectarse al servidor web una vez conocida la IP de éste, dentro de la LAN.  
- 
- <img width="1500" height="800" alt="Imagen1" src="https://github.com/user-attachments/assets/22227e05-d7fb-4c40-b8c9-b8fc8a49bf36" />
+
+ <img width="1500" height="800" alt="Imagen2" src="https://github.com/user-attachments/assets/8c09a309-c264-4627-8572-fa67d697816e" />
+
 
 También en la demostración en simulación se verificará que el stream de video de la cámara del dron, capturado por el Camera Service llega a los diferentes módulos conectados (dashboards en Python y C# y a la web app).
 
@@ -385,6 +386,8 @@ También en la demostración en simulación se verificará que el stream de vide
 Para muchos de los retos que se plantean en la versión 2, la IA puede proporcionar soluciones fáciles de adaptar (por ejemplo, el tema de los mapas geolocalizados). Pero hay dos retos especialmente desafiantes para los que sse recomiendan unos materiales complementarios. Se trata de la distribución del stream de vídeo por WebRTC a los diferentes módulos y del uso de https en la web app para controlar el dron mediante la voz.    
 
 La distribución del stream de video por WebRTC no ofrece ninguna dificultad especial en el caso de que todos los módulos implicados estén conectados a la misma LAN (por ejemplo, a la wifi del DroneLab). En ese caso todos los módulos pueden usar la IP del portátil en el que se ejecuta el Camera Service para conectarse y recibir el stream de video, exactamente como se hizo en la versión 1.   
+
+La situación es más complicada si alguno de los módulos que deben recibir el stream de video está conectada a una LAN diferente. Ese sería el caso si el telefono móvil no estuviese conectado a la wifi del DroneLab sino que estuviese conectado al servicio de datos. En esa situación, el cliente web que se ejecuta en el movil no puede conectarse directamente al Camera Service
 
 
 
