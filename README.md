@@ -22,6 +22,10 @@ La versión 4 será la versión final con todas las funcionalidades previstas. A
 
 ## 2. Criterios de evaluación    
 
+ - 50% Proyecto
+ - 20% Examen 1
+ - 20% Examen 2
+ - 10% Actitud y Participación
 
 ## 3. Recursos    
 ### 3.1 Git y GitHub   
@@ -66,6 +70,60 @@ Esta es una implementación de DronLink para C#. Toda la información (incluyend
 Esta es una lectura para aprender lo básico sobre las diferentes tecnologías y herramientas relacionadas con las comunicaciones entre los diferentes elementos que pueden intervenir en el proyecto a desarrollar.   
 [comunicacionesEcosistema.pdf](https://github.com/user-attachments/files/23694565/comunicacionesEcosistema.pdf)
 
+### 3.9 Conexión con el dron real   
+La mayor parte del tiempo de desarrollo trabajaremos con el simulador SITL. Pero lógicamente, en algún momento hay que poner a prueba los programas con el dron real. Veamos todo lo que hay que saber sobre esta cuestión.   
+ 
+El portátil en el que se van a ejecutar nuestros programas debe conectarse con el dron a través de la radio de telemetría, que debe estar conectada a uno de los puertos USB del portátil. Consultando el Administrador de dispositivos de Windows podemos verificar rápidamente en cuál de los puertos COM está conectada la radio. Entonces, basta sustituir en el programa las siguientes líneas de código:   
+
+```
+connection_string = "tcp:127.0.0.1:5763"
+vehicle = connect (connection_string, wait_ready = True, baud = 115200)
+```
+por estas (suponiendo que la radio de telemetría está en COM12:
+```
+connection_string = "COM12"
+vehicle = connect (connection_string, wait_ready = True, baud = 57600)
+```
+En definitiva cambiamos el string de conexión y la velocidad de transmisión (que es menor cuando se usa la radio de telemetría). Con estos cambios, nuestros programas deberían funcionar igual que lo hacían con el simulador. Habitualmente, las diferencias de comportamiento se deben a las diferentes velocidades con las que ocurren las cosas con el dron real, que podrían dar lugar a errores que no se habían observado con el simulador.   
+
+### 3.10 Conexión simultánea de nuestro programa y Mission Planner    
+
+Es importante comprender que si Mission Planner está conectado al dron a través de la radio de telemetría entonces nuestro programa no podrá conectarse al dron porque el puerto del portátil (COM12 en el ejemplo anterior) ya está ocupado. Por la misma razón, si nuestro programa se está ejecutando no podremos conectar Mission Planner al dron (puerto ocupado).    
+ 
+A veces no tendremos necesidad de tener conectados al dron simultáneamente nuestro programa y Mission Planner. Pero otras veces puede ser conveniente, por ejemplo, si estamos probando un plan de vuelo que se envía al dron por programa . Puede ocurrir que algo falle y queramos enviar un RTL al dron para que regrese inmediatamente, lo cual haremos desde Mission Planner.    
+  
+Para poder conectar al dron simultáneamente nuestro programa y Mission Planner necesitamos un pequeño proxy que haga de intermediario entre los diferentes elementos, tal y como muestra la figura.    
+<img width="497" height="260" alt="image" src="https://github.com/user-attachments/assets/58612ff5-04c7-43f0-8e17-e3891b4a576a" />     
+
+El proxy no es más que un servidor que se conecta por un lado al dron, a través de la radio de telemetría (en el puerto que corresponda) y por otro lado a los programas que necesitan enviar/recibir información al/del dron. La figura indica que el proxy ofrece dos puertos UDP. Mission Planner se conectará al puerto 14550  y nuestro programa al puerto 14551. El proxy se encargará de encaminar adecuadamente la información entre esos elementos, de manera que podremos tener conectados simultáneamente Mission Planner y nuestro programa.     
+ 
+MAVProxy es una herramienta gratuita que nos permite hacer exactamente eso: poner en marcha el proxy que necesitamos. Toda la información sobre esta herramienta pueden encontrarse aquí:     
+  
+<img width="284" height="123" alt="image" src="https://github.com/user-attachments/assets/402a6dd0-8c98-48ac-87c8-03aa6a04269e" />   
+   
+[MAVProxy — MAVProxy documentation (ardupilot.org)](https://ardupilot.org/mavproxy/)
+
+La puesta en marcha es muy sencilla. Hay que instalar el software en el portátil siguiendo las instrucciones del apartado Download and Installation. Después, debe abrirse un terminal de PowerShell y escribir el siguiente comando:     
+```
+mavproxy --master=com12 --out=udp:127.0.0.1:14550 --out=udp:127.0.0.1:14551
+```
+Ahora ya tenemos en marcha el proxy y podemos conectar Mission Planner a uno de los puertos UDP y nuestro programa al otro (con el connextion string correspondiente al puerto UDP) para interactuar simultáneamente con el dron a través de la radio de telemetría. El video siguiente muestra cómo se hace este proceso.    
+
+[![](https://markdown-videos-api.jorgenkh.no/url?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D-wshxqRHUCY)](https://www.youtube.com/watch?v=-wshxqRHUCY)
+
+El vídeo muestra como:      
+
+-  Se pone en marcha Mission Planner    
+-  Se conecta al dron a través del puerto COM12 en el que está conectada la radio de telemetría    
+-  Intentamos conectar también el programa, ajustando la velocidad de transmisión    
+-  La conexión del programa fracasa porque el puerto COM12 está ya ocupado por Mission Planner 
+-  Desconectamos Mission Planner para dejar libre el puerto y conectamos (ahora si) nuestro programa  
+-  Abrimos un terminal de PowerShell y ponemos en marcha el proxy    
+-  Ahora conectamos Mission Planner por UDP al puerto 14551 y nuestro programa al puerto 14550    
+-  Finalmemnte ya tenemos a ambos conectados al dron    
+ 
+Obsérvese que en el momento de conectar Misión Planner al puerto UDP el autor del vídeo tiene alguna vacilación porque Mission Planner ya estaba conectado. Ha realizado algunas operaciones para desconectarlo y poder mostrar la operación de conexión, en la que hay que especificar el puerto al que debe conectarse. Obsérvese también que se han asignado los puertos UDP en el orden contrario al de la figura. Esa cuestión es indiferente.
+
 ## 4. Versión 1    
 
 ### 4.1 Escenario local    
@@ -103,7 +161,7 @@ La carpeta *DashboardLocalCsharp* contiene una aplicación en Visual C# con Wind
 
 Esta estación de tierra utiliza la librería csDronLink, que es una versión de DronLink para C#, con el mismo modelo de programación (llamadas no bloqueantes, funciones de callback, etc.).   
  
-El botón para conectar establece una conexión con el simulador SITL. Aunque técnicamente sería posible conectar al simulador simultáneamente la estación de tierra en Python y la estación en C#, en la realidad solo una de las dos podrá usar la radio de telemetría para enviar órdenes al dron. Por ese motivo, el botón de conexión se conecta al SITL solo si no está conectada ya la estación en Python.    
+El botón para conectar establece una conexión con el simulador SITL. Recordemos que si quisieramos tener conectadas al dron la estación de tierra en Python y la estación de tierra en C# debemos usar MAVProxy, tal y como se ha descrito en el apartado 3.10. Incluso sería posible tener conectado también simultáneamente Mission Planner, aunque en este caso habría que poner en marcha MAVProxy con trespuertos UDP, y no dos como se ha mostrado en el apartado 3.10. Si se trata de trabajar con el SITL todo es más fácil porque ese simulador ofrece tres puertos para que se conecten 3 aplicaciones (Mission Planner y nuestras dos estaciones de tierra).    
  
 Trabajar en Visual C# con Windows Forms tiene la ventaja de que es más fácil (para muchos) diseñar la interfaz gráfica. Además, al ser C# un lenguaje compilado el código se ejecuta más rápido que el código de Python (que es un lenguaje interpretado). Esta es una ventaja relativa porque una interfaz de usuario trabaja en la mayoría de los casos a la velocidad del usuario humano, que no es mucha comparada con la velocidad del ordenador. La desventaja de C# frente a Python es que para implementar una cierta función se requieren normalmente más líneas de código.     
  
@@ -201,6 +259,19 @@ Se proponen los siguientes ejercicios:
 2.	Añadir un nuevo botón para realizar la operación RTL.
 3.	Añadir los elementos necesarios para poder cambiar el heading del dron, igual que puede hacerse en las aplicaciones descritas en apartados anteriores.
 
+#### 4.2.4 Advertencia sobre los topics en MQTT   
+Cabe esperar que varios grupos hagan pruebas de sus aplicaciones en el aula al mismo tiempo, haciendo publicaciones simultaneamente en el mismo broker y usando los mismos topics, que son los que aparecen en los códigos proporcionados en este repo. Por ejemplo, si hay varios grupos probando el autopilot service al mismo tiempo, todos suscritos en el mismo broker al topic:   
+```
+'interfazGlobal/autopilotServiceDemo/arm_takeOff'
+```
+en cuanto una de las aplicaciones publique ese topic, todos los drones despegarán.   
+
+Para evitar esta interferencia es importante que cada grupo revise el formato que va a usar para los topics. Lo más sencillo es que cada grupo añada de alguna manera en el topic el número de grupo. Por ejemplo:   
+```
+'interfazGlobal5/autopilotServiceDemo5/arm_takeOff'
+```  
+
+
 ### 4.3 Videostreaming   
  
 Muchas de las aplicaciones de los drones requieren la captura y procesado de imágenes, como, por ejemplo, el stream de video. Naturalmente, esto requiere que el dron tenga instalada una cámara abordo y un trasmisor que envíe la señal de vídeo a la estación de tierra, en la que debe haber un receptor que permita entregar ese stream de video a la aplicación que lo necesite.    
@@ -215,7 +286,7 @@ Cuando se usa WebRTC, uno de los agentes implicados (emisor o receptor) debe act
  
 El fichero *cameraService.py* contiene el código necesario para capturar el stream de video usando la librería OpenCV y emitirlo por WebRTC.  El código captura el video de la webcam conectada al portátil en el que se ejecute, pero cambiando el valor de camera_id puede capturar el video que llega al receptor que tenga conectado. Al ponerse en marcha, el servicio queda a la espera de que algún cliente solicite el stream de video. Entonces se inicia un sencillo protocolo de coordinación a través de un websocket de manera que, una vez puestos de acuerdo, se inicia la trasmisión del stream de video, frame a frame (en la función *recv*).    
  
-El fichero *DashboardLocalConVideoStream.py* contiene el código de un dashboard que es básicamente igual que el descrito en el apartado 4.1.1, al que se le ha añadido un botón para conectarse al CameraService y recibir el stream de video para mostrarlo al usuario. El código está preparado para el caso de que tanto el dashboard como el servicio se ejecuten en el mismo portátil (que debe tener una webcam). El sistema funcionaría igual si el servicio de cámara y el dashboard se ejecutan en portátiles diferentes pero conectados a la misma red de área local. En ese caso, hay que sustituir la palabra *localhost* en la función *videoReceiver* del Dashboard por la IP del servicio dentro de la red de área local.    
+El fichero *DashboardLocalConVideoStream.py* contiene el código de un dashboard que es básicamente igual que el descrito en el apartado 4.1.1, al que se le ha añadido un botón para conectarse al CameraService y recibir el stream de video para mostrarlo al usuario. El código está preparado para el caso de que tanto el dashboard como el servicio se ejecuten en el mismo portátil (que debe tener una webcam). El sistema funcionaría igual si el servicio de cámara y el dashboard se ejecutan en portátiles diferentes pero conectados a la misma red de área local. En ese caso, hay que sustituir la palabra *localhost* en la función *videoReceiver* del Dashboard por la IP del portátil en el que se ejecuta el CameraService.    
  
 La transmisión de video por WebRTC puede funcionar también en el caso de que el servicio y el dashboard estén conectados a Internet pero no en la misma red de área local. Si el servicio no está conectado a una IP pública entonces la coordinación entre servicio y dashboard debe realizarse a través de un proxy que sí tenga una IP pública conocida por ambos. Pero ese planteamiento se escapa del alcance de la versión 1 y puede quedar como objetivo en las siguientes versiones.
 
@@ -237,11 +308,22 @@ Se proponen los siguientes ejercicios:
 1.	Procesar 1 de cada 100 frames hace que el impacto en la fluidez sea despreciable, pero introduce un retardo en la detección del objeto. Experimentar con valores más bajos de ese periodo hasta encontrar un mejor compromiso entre fluidez y retardo en la detección.
 2.	Añadir botones para reconocer otros objetos del data set de COCO.
 
+### 4.5 Pruebas de la versión 1   
+Los diferentes códigos descritos (y modificados) en los apartados anteriores se habrán probado en el SITL. Pero ahora hay que probarlos con el dron real. Normalmente lo que funcionó con el SITL funcionará igual con el dron real. Pero no siempre es así. A veces porque se echa en falta alguna librería que no se había necesitado hasta ese momento y otras veces porque con el dron real el tiempo que tardan en pasar las cosas es diferente (por ejemplo, los datos viajan más despacio por el enlace de telemetría que por el enlace TCP local entre la aplicación y el SITL).   
 
+Se realizarán tres pruebas independientes para verificar el correcto funcionamiento del dashboard local en Python (se necesitará *DashboardGlobalPython.py*), del dashboard local en C# (se necesitará *DashboardLocalCsharp*) y de la WebApp (se necesitará *serverMQTT.py*, *indexMQTT.html* y *autopilotService.py*). Además, en cada una de las tres pruebas se usará MAVProxy para conectar al dron simultáneamente el módulo que se quiere probar (el dash en Python, el dash en C# o el autopilot service) y Mission Planner. Cada prueba consistirá en hacer despegar el dron (a no más de 5 metros), moverlo en varias direcciones y aterrizarlo.  
+
+En el aula, antes de ir al DroneLab, deben comprobarse que cada uno de los modulos se conecta al dron, recibe bien los datos de telemetría y puede armarse. Esa simple prueba en el aula acostumbra a evidenciar algunos problemas como estos:   
+1. El portátil no muestra el puerto COM en el que se ha conectado la radio de telemetría. Esto indica que al instalar Mission Planner no se instalaron los drivers que permiten trabajar con la radio de telemetría. Hay que desinstalar Mission Planner y volver a instalarlo, prestando especial atención al proceso y al momento en el que el instador pide permiso para instalar los drivers.   
+2. La aplicación no encuentra el módulo *serial*. Se echa en falta la librería *pyserial*, que hay que instalar.
+3. El enlace de telemetría es lento y pasa mucho tiempo desde que el dron se arma hasta que recibimos el aviso de que ya está armado, con lo cual el dron se desarma antes de tiempo (esto es especialmente frecuente en el caso de la WebApp, porque ahí todo es más lento). Este problema tiene dos soluciones posibles. Eliminamos el boton de armar y hacemos que el boton de despegue ejecute primero la operación de armar e inmediatamente la de despegue, sin avisar al usuario ni esperar a que éste ordene el despegue. La alternativa es cambiar el parámetro de ardupilot que indica cuanto tiempo va a esperar antes de desarmar por falta de actividad. Ese parámetro es DISARM_DELAY.
+
+También en el aula se hará una prueba de verificación de que el dashboard en Python recibe y muestra correctamente el stream de video de la cámara que llevará instalada el dron.    
+ 
 ## 5. Versión 2
 Lo que hemos llamado versión 1 no es en realidad una versión de nada. Se trata de diferentes módulos desarrollados de manera independiente para aprender conceptos y herramientas. Ahora ha llegado el momento de crear una verdadera versión de un sistema en el que los díferentes módulos estén interconectados y puedan colaborar en la tarea de controlar el dron.    
 
-En la versión 2 habrá solo 3 modulos: el dashboard en python, el dashboard en C# y una webapp, todos ellos conectados a Internet. Además, ampliaremos las funcionalidades de todos ellos con, por ejemplo, mapas geolocalizados o control del dron por voz.    
+En la versión 2 habrá solo 3 módulos: el dashboard en python, el dashboard en C# y una webapp, todos ellos conectados a Internet. Además, ampliaremos las funcionalidades de todos ellos con, por ejemplo, mapas geolocalizados o control del dron por voz.    
 
 Además, la vesión 2 va a estar mucho menos guiada. Será necesario buscar información, probar y buscar más. El uso de ChatGPT (o similar) será de mucha ayuda, aunque se espera que la versión 2 se construya sobre la base de lo aprendido en la versión 1, y no con códigos muy diferentes, proporcionados por la IA, que funcionen pero apenas se entiendan. En cualquier caso, en el apartado 5.2 se proporcionan algunas pistas y se sugieren algunos recursos que pueden ser de ayuda.    
  
@@ -253,7 +335,7 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 
 #### 5.1.1 Dashboard en Python   
 
-1.  El dashboard en Python debe integrar el servicio de autopiloto y el servicio de cámara. 
+1. El dashboard en Python debe integrar el servicio de autopiloto y el servicio de cámara. 
 2. Debe poder trabajar en modo local o en modo global, según indique el usuario (quizá con un botón).
 3. Si se pone marcha en modo local entonces debe activar el servicio de autopiloto y el servicio de cámara. 
 4. Siempre tiene que haber una (y solo una) instancia del dashboard que se ponga en marcha en modo local, en el portátil que tenga la radio de telemetría y el receptor del vídeo del dron. 
@@ -268,7 +350,7 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 1. Debe funcionar en modo global, es decir, haciendo peticiones al servicio de autopiloto por MQTT
 2. Debe mostrar al usuario un mapa geolocalizado con la ubicación del dron en cada momento
 3. El usuario debe poder clicar en el mapa para hacer que el dron se dirija a ese punto
-4. Debe mostrar el stream de video que se recibe por WebRTC del servicio de cámara
+4. Debe mostrar el stream de video que se recibe por WebRTC del servicio de cámara. Para implementar este requisito es muy importante mirar lo que se explica en el apartado 5.2.
 5. El usuario debe poder solicitar el reconocimiento de uno o varios objetos de entre un subconjunto del data ser de COCO
 6. Debe permitir capturar imagenes del stream de video (hacer fotos) y guardarlas, de manera que el usuario pueda verlas cuando quiera en un formulario que muestre una galería de las fotos tomadas
 
@@ -276,18 +358,40 @@ Veamos los requisitos de cada uno de los tres módulos del sistema a desarrollar
 
 1. Debe tener una pestaña que muestre los botones para controlar el dron, otra para mostrar un mapa geolocalizado con la posición del dron en cada momento y otra con el stream de video que se recibe del dron
 2. Debe comunicarse con el servicio de autopiloto por MQTT y con el servicio de cámara por WebRTC
-3. El usuario debe poder controlar el dron mediante la voz, diciendo palabras clave como: "Despega", "Aterriza", "Vuela hacia el Norte", etc.
+3. El usuario debe poder controlar el dron mediante la voz, diciendo palabras clave como: "Despega", "Aterriza", "Vuela hacia el Norte", etc. Para implementar este requisito es muy importante mirar lo que se explica en el apartado 5.2.
 
-## 5.2 Observaciones y recursos
-Para muchos de los retos que se han planteado, la IA puede proporcionar soluciones fáciles de adaptar (por ejemplo, el tema de los mapas geolocalizados o en tema de captar la voz y convertirla en texto). Pero es posible que la IA no ayude mucho en los retos relacionados con la trasmisión del video por WebRTC.
+#### 5.1.4 Demostracion de la versión 2    
+
+La demostración tiene dos fases: demo en modo simulación y (si todo va bien) demo modo producción, en el DroneLab.  
+En la demo intervienen (tanto en simulación como en producción):
+1. El portátil 1 con el dashboard en Python que trabajará en modo local (se conectará al SITL o al dron) a través de MAVProxy, al que también estará conectado Mission Planner. En este portátil también se pondrán en funcionamiento el autopilot service y el camera service.
+2. El portátil 2 con el dashboard en Python que trabajará en modo global. Además en este protátil correrá el servidor de la web app.
+3. El portátil 3 en el que se ejecutará el dashboard en C# trabajando en modo global.
+4. Un telefono móvil que se conectará a la webapp.
+
+En la demostración de la versión 2 se usará un bróker MQTT propio instalado en una máquina del Campus (no es Hivemq). Hay que solicitar a los responsables académicos la información necesaria para poder usar este bróker, que tiene claves de autentificación.   
+ 
+Tanto en simulación como en producción todos los módulos deben estar conectados a la misma LAN, para que puedan conectarse directamente entre ellos (por ejemplo, al CameraService los módulos que quieran recibir el stream de video o al servidor web los teléfonos móviles que quieran controlar el dron). En producción podrá usarse la wifi del DroneLab. En simulación puede ayudar usar un telefono auxiliar para crear un punto de acceso para compartir datos.   
+
+ <img width="1500" height="800" alt="Imagen2" src="https://github.com/user-attachments/assets/8c09a309-c264-4627-8572-fa67d697816e" />
+
+La demostración también debe poner en evidencia que el stream de video de la cámara del dron, capturado por el Camera Service llega a los diferentes módulos conectados (dashboards en Python y C# y a la web app).
+
+
+## 5.2 Observaciones y recursos    
+ 
+Para muchos de los retos que se plantean en la versión 2, la IA puede proporcionar soluciones fáciles de adaptar (por ejemplo, el tema de los mapas geolocalizados). Pero hay dos retos especialmente desafiantes para los que se recomiendan unos materiales complementarios. Se trata de la distribución del stream de vídeo por WebRTC a los diferentes módulos y del uso de https en la web app para controlar el dron mediante la voz.    
+
+La distribución del stream de video por WebRTC no ofrece ninguna dificultad especial en el caso de que todos los módulos implicados estén conectados a la misma LAN (por ejemplo, a la wifi del DroneLab). En ese caso todos los módulos pueden usar la IP del portátil en el que se ejecuta el Camera Service para conectarse y recibir el stream de video, exactamente como se hizo en la versión 1.   
+
+La situación es más complicada si alguno de los módulos que deben recibir el stream de video está conectada a una LAN diferente. Ese sería el caso si el telefono móvil no estuviese conectado a la wifi del DroneLab sino que estuviese conectado al servicio de datos. En esa situación, el cliente web que se ejecuta en el movil no puede conectarse directamente al Camera Service. Para resolver el problema se necesita de un intermediario (un proxy) ejecutándose en una máquina con IP pública de manera que todos los módulos se conecten a ese proxy que habría de intermediario en el establecimiento de la comunicación via WebRTC. Aunque este escenario está fuera del alcance de la versión 2, en este repositorio puede encontrarse mucha información para aprender más sobre la cuestión, que quizá sea importante de cara a las versiones 3 y 4 del proyecto de algunos equipos.   
+ 
+ [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-Video_Streaming-blue.svg)](https://github.com/dronsEETAC/Tutorial_VideoStreaming.git) 
+
 
 El envío del stream de video por WebRTC a través de Internet no es trivial porque requiere de un proxy con IP pública a la que se conecten tanto el emisor como los diferentes clientes que soliciten el vídeo. Ese proxy también forma parte del sistema.    
 
-Por otra parte, la recepción del vídeo por parte del Dashboard el C# tampoco es fáci. La codificación en C# de las operaciones para establecer la conexión son complejas y no hay buena información al respecto. Es más fácil que la conexión y recepción la realice un script de Python que activa el dashboard en C# y que facilite el stream recibido al dashboard para que éste lo muestre al usuario.   
-
-Finalmente, tampoco es sencillo hacer que el stream de video se muestre en el cliente web de la WebApp.    
-
-En todo caso, en este repositorio [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-Video_Streaming-blue.svg)](https://github.com/dronsEETAC/Tutorial_VideoStreaming.git) hay abundante material que puede resultar de ayuda para resolver estos retos.   
+Por otra parte, la recepción del vídeo por parte del Dashboard el C# tampoco es fáci incluso aunque estén todos los módulos conectados en la misma LAN. La codificación en C# de las operaciones para establecer la conexión son complejas y no hay buena información al respecto. Es más fácil que la conexión y recepción la realice un script de Python que activa el dashboard en C# y que facilite el stream recibido al dashboard para que éste lo muestre al usuario. Mas información sobre cómo hacer esto se puede encontrar en el punto 5.3 del tutorial sobre video streaming antes mencionado.    
  
 El uso del micrófono del dispositivo móvil para capturar la voz y controlar el dron con ella plantea el reto de que debe hacerse en modo seguro, es decir, con HTTPS y no con HTTP. Esto es así porque tratandose de información privada del usuario (su voz) los navegadores exigen que la información se transmita encriptada, lo cual requiere del uso de certificados que implementen claves públicas y privadas. Lo mismo pasaría si quisiésemos capturar información de otros sensores del movil, como por ejemplo, la imagen de la cámara o la geolocalización del móvil. Aunque resolver la cuestion solo requiere generar los certificados necesarios (cosa muy sencilla) y añadir unas pocas líneas de código, los conceptos que hay detrás son complejos, aunque muy interesantes. Esta colección de vídeos [![DroneEngineeringEcosystem Badge](https://img.shields.io/badge/DEE-WebApps_seguras-pink.svg)](https://www.youtube.com/playlist?list=PLyAtSQhMsD4qbgXn6jheozHsjU4GRCqtv) ayuda a abordar la cuestión.
 
