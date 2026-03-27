@@ -79,6 +79,7 @@ dron = Dron()
 client = mqtt.Client("autopilotServiceDemo", transport="websockets")
 
 # me conecto al broker publico y gratuito
+# existe un broker privado en el Campus. Para usarlo, pedir información a los responsables académicos
 broker_address = "broker.hivemq.com"
 broker_port = 8000
 

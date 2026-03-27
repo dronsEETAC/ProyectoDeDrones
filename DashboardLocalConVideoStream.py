@@ -1,92 +1,50 @@
+import json
 import threading
 import tkinter as tk
 from dronLink.Dron import Dron
 
 import asyncio
 import cv2
-import numpy as np
+
 from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
-from aiortc.contrib.signaling import TcpSocketSignaling
-from av import VideoFrame
-from datetime import datetime, timedelta
-
-class VideoReceiver:
-    def __init__(self):
-        self.track = None
-
-    async def handle_track(self, track):
-        self.track = track
-        frame_count = 0
-        while True:
-            try:
-                print("Espero un frame frame...")
-                frame = await asyncio.wait_for(track.recv(), timeout=5.0)
-                frame_count += 1
-
-                frame = frame.to_ndarray(format="bgr24")
-                cv2.imshow("Frame", frame)
-
-                # Exit on 'q' key press
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-            except asyncio.TimeoutError:
-                print("Timeout")
-            except Exception as e:
-                print(f"Error en handle_track: {str(e)}")
-                if "Connection" in str(e):
-                    break
-        print("Salgo del track")
+from websockets import connect
 
 
-async def run(pc, signaling):
-    await signaling.connect()
+async def display_track(track):
+    while True:
+        frame = await track.recv()
+        img = frame.to_ndarray(format="bgr24")
+
+        cv2.imshow("Receiver", img)
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    cv2.destroyAllWindows()
+
+async def videoReceiver ():
+    pc = RTCPeerConnection()
+    print ("He creado la estructura de datos")
 
     @pc.on("track")
     def on_track(track):
-        if isinstance(track, MediaStreamTrack):
-            print(f"Recibo el track con el video stream")
-            asyncio.ensure_future(video_receiver.handle_track(track))
+        print("Track recibido:", track.kind)
+        if track.kind == "video":
+            asyncio.create_task(display_track(track))
 
-    print("Esperando la oferta...")
-    offer = await signaling.receive()
-    print("Oferta recibida")
-    await pc.setRemoteDescription(offer)
-    answer = await pc.createAnswer()
-    await pc.setLocalDescription(answer)
+    async with connect("ws://127.0.0.1:9999") as ws:
+        print ("Ya estoy conectado al emisor. Espero una oferta ...")
 
-    await signaling.send(pc.localDescription)
-    print("Respuesta enviada")
-
-    print("Espero conexión ...")
-    while pc.connectionState != "connected":
-        await asyncio.sleep(0.1)
-
-    print("Conexión establecida, espero frames...")
-    await asyncio.sleep(100)  # Wait for 35 seconds to receive frames
-
-    print("Cierro conexión")
-
-
-async def videoReceiver():
-    # el receptor actua de cliente que debe conectarse al emisor que actua de servidor
-    IP_server = "localhost"
-    signaling = TcpSocketSignaling(IP_server, 9999)
-    # prepado la estructura para la conexión
-    pc = RTCPeerConnection()
-
-    global video_receiver
-    video_receiver = VideoReceiver()
-
-    try:
-        await run(pc, signaling)
-    except Exception as e:
-        print(f"Error in main: {str(e)}")
-    finally:
-        print("Closing peer connection")
-        await pc.close()
-
-
-
+        async for raw in ws:
+            print ("Recibo algo del emisor")
+            data = json.loads(raw)
+            if data.get("type") == "sdp":
+                print ("Es la oferta del emisor")
+                desc = RTCSessionDescription(sdp=data["sdp"], type=data["sdp_type"])
+                await pc.setRemoteDescription(desc)
+                answer = await pc.createAnswer()
+                await pc.setLocalDescription(answer)
+                print ("Ya tengo preparada la respuesta")
+                await ws.send(json.dumps({"type": "sdp",  "sdp": pc.localDescription.sdp, "sdp_type": pc.localDescription.type}))
+                print("Respuesta enviada")
 
 
 def showTelemetryInfo (telemetry_info):
@@ -97,7 +55,7 @@ def showTelemetryInfo (telemetry_info):
     stateShowLbl['text'] = telemetry_info['state']
 
 
-def connect ():
+def connection ():
     global dron, speedSldr
     connection_string ='tcp:127.0.0.1:5763'
     baud = 115200
@@ -219,7 +177,7 @@ def crear_ventana():
 
     # Disponemos los botones, indicando qué función ejecutar cuando se clica cada uno de ellos
     # Los tres primeros ocupan las dos columnas de la fila en la que se colocan
-    connectBtn = tk.Button(ventana, text="Conectar", bg="dark orange", command = connect)
+    connectBtn = tk.Button(ventana, text="Conectar", bg="dark orange", command = connection)
     connectBtn.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
 
     armBtn = tk.Button(ventana, text="Armar", bg="dark orange", command=arm)

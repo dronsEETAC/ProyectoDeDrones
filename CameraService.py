@@ -1,22 +1,19 @@
-###########  INSTALAR #########################
-# opencv-python
-# aiortc
-###############################################
-
-
 import asyncio
+import json
+
 import cv2
+import websockets
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
-from aiortc.contrib.signaling import TcpSocketSignaling
 from av import VideoFrame
 import fractions
-
+from datetime import datetime
 
 class CustomVideoStreamTrack(VideoStreamTrack):
     def __init__(self, camera_id):
         super().__init__()
-        print ("Preparando la cámara ...")
+        print ("Preparando la cámara ....")
         self.cap = cv2.VideoCapture(camera_id)
+        print ("Cámara preparada")
         self.frame_count = 0
 
     async def recv(self):
@@ -30,49 +27,53 @@ class CustomVideoStreamTrack(VideoStreamTrack):
         video_frame = VideoFrame.from_ndarray(frame, format="rgb24")
         video_frame.pts = self.frame_count
         video_frame.time_base = fractions.Fraction(1, 30)  # Use fractions for time_base
-
+        # Add timestamp to the frame
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Current time with milliseconds
+        cv2.putText(frame, timestamp, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
 
         video_frame = VideoFrame.from_ndarray(frame, format="rgb24")
         video_frame.pts = self.frame_count
         video_frame.time_base = fractions.Fraction(1, 30)  # Use fractions for time_base
         return video_frame
 
-async def setup_webrtc_and_run(ip_address, port, camera_id):
-    # aquí le digo el puerto donde se abre el websocket para ponerse de acuerdo con el cliente
-    signaling = TcpSocketSignaling(ip_address, port)
-    # Creamos la estructura que se necesita para establecer el canal de comunicación via WebRTC
+
+async def handle_client(websocket):
+    global video_sender
+    print("Se ha conectado el receptor")
+    # preparo las estructuras para la conexión WebRTC y envio la oferta
     pc = RTCPeerConnection()
-    video_sender = CustomVideoStreamTrack(camera_id)
-    pc.addTrack(video_sender) # aqui le decimos de dónde sale el stream de video
+    pc.addTrack(video_sender)
+    offer = await pc.createOffer()
+    await pc.setLocalDescription(offer)
+    print ("Envio la oferta")
+    await websocket.send(json.dumps(
+                    {"type": "sdp", "sdp": pc.localDescription.sdp,
+                     "sdp_type": pc.localDescription.type}))
 
     try:
-        print ("Esperando clientes")
-        await signaling.connect()
+        print ("Espero respuesta")
+        async for message in websocket:
+            data = json.loads(message)
+            if data.get("type") == "sdp":
+                print ("Recibo aceptación")
+                desc = RTCSessionDescription(sdp=data["sdp"], type=data["sdp_type"])
 
-        print ("Preparo la oferta. En cuanto se conecte el cliente se la envío")
-        offer = await pc.createOffer()
-        await pc.setLocalDescription(offer)
-        await signaling.send(pc.localDescription)
-        print ("Ciente conectado. Envio oferta y espero respuesta")
-        while True:
-            obj = await signaling.receive()
-            if isinstance(obj, RTCSessionDescription):
-                await pc.setRemoteDescription(obj)
-                print("Respuesta recibida. Trasmisión en marcha")
-            elif obj is None:
-                print("Fallo en la coordinación")
-                break
-        print("Cierro conexión")
+                await pc.setRemoteDescription(desc)
+                print("Pongo en marcha el stream")
+
+    except websockets.ConnectionClosed:
+        print("❌ Conexión cerrada.")
     finally:
-        await pc.close()
+        cv2.destroyAllWindows()
 
 async def main():
-    # En este caso es el emisor el que actua de servidor, exponiendo el canal de comunicación
-    # en el puerto 9999
-    ip_address = "0.0.0.0"
-    port = 9999
-    camera_id = 0  # Hay que cambiar eso en el caso de capturar el video que viene del dron
-    await setup_webrtc_and_run(ip_address, port, camera_id)
+    global video_sender
+    video_sender = CustomVideoStreamTrack(0)
+    HOST = '0.0.0.0'
+    PORT = 9999
+    print(f"🖥️ Esperando conexión en ws://{HOST}:{PORT}")
+    async with websockets.serve(handle_client, HOST, PORT):
+        await asyncio.Future()  # Mantener servidor activo
 
 if __name__ == "__main__":
     asyncio.run(main())

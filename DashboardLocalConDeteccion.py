@@ -5,16 +5,16 @@
 # tpdm
 #######################################
 
+import json
 import threading
 import tkinter as tk
 from dronLink.Dron import Dron
 
 import asyncio
 import cv2
-import numpy as np
+
 from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
-from aiortc.contrib.signaling import TcpSocketSignaling
-from av import VideoFrame
+from websockets import connect
 import torch
 
 
@@ -46,122 +46,60 @@ class Detector:
             return False, None
 
 
-class VideoReceiver:
-    def __init__(self):
-        self.track = None
-        self.detector = Detector()
-        self.objectID = None
+async def display_track(track):
+    global objectID
+    frame_count = 0
+    detectado = False
+    detector = Detector()
+    while True:
+        frame = await track.recv()
+        frame = frame.to_ndarray(format="bgr24")
+        frame_count += 1
+        if objectID:
+            if frame_count % 25 == 0:
+                detectado, rectangulo = detector.detect(frame, objectID)
 
-    def setObject (self, objectID):
-        self.objectID = objectID
+            if detectado:
+                label = "here"
+                x1, y1, x2, y2 = rectangulo
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                cv2.putText(frame, label, (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-    async def handle_track(self, track):
-        print("Inside handle track")
-        self.track = track
-        frame_count = 0
-        detectado = False
-        while True:
-            try:
-                #print("Waiting for frame...")
-                frame = await asyncio.wait_for(track.recv(), timeout=5.0)
-                frame_count += 1
-                #print(f"Received frame {frame_count}")
+        cv2.imshow("Frame", frame)
 
-                if isinstance(frame, VideoFrame):
-                    #print(f"Frame type: VideoFrame, pts: {frame.pts}, time_base: {frame.time_base}")
-                    frame = frame.to_ndarray(format="bgr24")
-                elif isinstance(frame, np.ndarray):
-                    print(f"Frame type: numpy array")
-                else:
-                    #print(f"Unexpected frame type: {type(frame)}")
-                    continue
-                if self.objectID:
-                    if frame_count % 25 == 0:
-                        detectado, rectangulo  = self.detector.detect(frame,self.objectID)
-
-                    if detectado:
-                        label = "here"
-                        x1, y1, x2, y2 = rectangulo
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        cv2.putText(frame, label, (x1, y1 - 10),
-                                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-                cv2.imshow("Frame", frame)
-
-                # Exit on 'q' key press
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-            except asyncio.TimeoutError:
-                print("Timeout waiting for frame, continuing...")
-            except Exception as e:
-                print(f"Error in handle_track: {str(e)}")
-                if "Connection" in str(e):
-                    break
-        print("Exiting handle_track")
+        # Exit on 'q' key press
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 
-async def run(pc, signaling):
-    await signaling.connect()
+    cv2.destroyAllWindows()
+
+async def videoReceiver ():
+    pc = RTCPeerConnection()
+    print ("He creado la estructura de datos")
 
     @pc.on("track")
     def on_track(track):
-        if isinstance(track, MediaStreamTrack):
-            print(f"Receiving {track.kind} track")
-            asyncio.ensure_future(video_receiver.handle_track(track))
+        print("Track recibido:", track.kind)
+        if track.kind == "video":
+            asyncio.create_task(display_track(track))
 
-    @pc.on("datachannel")
-    def on_datachannel(channel):
-        print(f"Data channel established: {channel.label}")
+    async with connect("ws://127.0.0.1:9999") as ws:
+        print ("Ya estoy conectado al emisor. Espero una oferta ...")
 
-    @pc.on("connectionstatechange")
-    async def on_connectionstatechange():
-        print(f"Connection state is {pc.connectionState}")
-        if pc.connectionState == "connected":
-            print("WebRTC connection established successfully")
-
-    print("Waiting for offer from sender...")
-    offer = await signaling.receive()
-    print("Offer received")
-    await pc.setRemoteDescription(offer)
-    print("Remote description set")
-
-    answer = await pc.createAnswer()
-    print("Answer created")
-    await pc.setLocalDescription(answer)
-    print("Local description set")
-
-    await signaling.send(pc.localDescription)
-    print("Answer sent to sender")
-
-    print("Waiting for connection to be established...")
-    while pc.connectionState != "connected":
-        await asyncio.sleep(0.1)
-
-    print("Connection established, waiting for frames...")
-    await asyncio.sleep(100)  # Wait for 35 seconds to receive frames
-
-    print("Closing connection")
-
-
-async def videoReceiver():
-    # el receptor actua de cliente que debe conectarse al emisor que actua de servidor
-    IP_server = "localhost"
-    signaling = TcpSocketSignaling(IP_server, 9999)
-    pc = RTCPeerConnection()
-
-    global video_receiver
-    video_receiver = VideoReceiver()
-
-    try:
-        await run(pc, signaling)
-    except Exception as e:
-        print(f"Error in main: {str(e)}")
-    finally:
-        print("Closing peer connection")
-        await pc.close()
-
-
-
+        async for raw in ws:
+            print ("Recibo algo del emisor")
+            data = json.loads(raw)
+            if data.get("type") == "sdp":
+                print ("Es la oferta del emisor")
+                desc = RTCSessionDescription(sdp=data["sdp"], type=data["sdp_type"])
+                await pc.setRemoteDescription(desc)
+                answer = await pc.createAnswer()
+                await pc.setLocalDescription(answer)
+                print ("Ya tengo preparada la respuesta")
+                await ws.send(json.dumps({"type": "sdp",  "sdp": pc.localDescription.sdp, "sdp_type": pc.localDescription.type}))
+                print("Respuesta enviada")
 
 
 def showTelemetryInfo (telemetry_info):
@@ -172,7 +110,7 @@ def showTelemetryInfo (telemetry_info):
     stateShowLbl['text'] = telemetry_info['state']
 
 
-def connect ():
+def connection ():
     global dron, speedSldr
     connection_string ='tcp:127.0.0.1:5763'
     baud = 115200
@@ -266,23 +204,29 @@ def videoThread ():
 def video ():
     threading.Thread (target = videoThread).start()
 
+
 def platano ():
-    global video_receiver
-    video_receiver.setObject(46)
+    global objectID
+    objectID = 46
 
 def clock ():
-    video_receiver.setObject(74)
+    global objectID
+    objectID = 74
 
 def pizza ():
-    video_receiver.setObject(53)
+    global objectID
+    objectID = 53
+
 
 def crear_ventana():
     global dron
     global  altShowLbl, headingShowLbl,  speedSldr, gradesSldr, stateShowLbl
     global connectBtn, armBtn, takeOffBtn, landBtn, RTLBtn
     global previousBtn # aqui guardaré el ultimo boton de navegación clicado
-
+    global objectID
     dron = Dron()
+
+    objectID = None
 
     previousBtn = None
 
@@ -304,7 +248,7 @@ def crear_ventana():
 
     # Disponemos los botones, indicando qué función ejecutar cuando se clica cada uno de ellos
     # Los tres primeros ocupan las dos columnas de la fila en la que se colocan
-    connectBtn = tk.Button(ventana, text="Conectar", bg="dark orange", command = connect)
+    connectBtn = tk.Button(ventana, text="Conectar", bg="dark orange", command = connection)
     connectBtn.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
 
     armBtn = tk.Button(ventana, text="Armar", bg="dark orange", command=arm)

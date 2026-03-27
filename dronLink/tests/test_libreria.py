@@ -4,6 +4,7 @@ from dronLink.Dron import Dron
 
 dron = Dron ()
 connection_string = 'tcp:127.0.0.1:5763'
+connection_string = 'tcp:10.254.58.15:5763'
 baud = 115200
 '''connection_string = 'com13'
 baud = 4800'''
